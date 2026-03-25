@@ -131,9 +131,9 @@ body{background:#0a0a14;color:#fff;font-family:'Inter',sans-serif;min-height:100
 <button class="rte-btn" onclick="rte('bold')"><b>B</b></button>
 <button class="rte-btn" onclick="rte('italic')"><i>I</i></button>
 <button class="rte-btn" onclick="rte('underline')"><u>U</u></button>
-<button class="rte-btn" onclick="rte('insertUnorderedList')">• List</button>
+<button class="rte-btn" onclick="rte('insertUnorderedList')">List</button>
 <button class="rte-btn" onclick="rteH3()">H3</button>
-<button class="rte-btn" onclick="rteHR()">— Line</button>
+<button class="rte-btn" onclick="rteHR()">Line</button>
 <button class="rte-btn" onclick="rteLink()">Link</button>
 </div>
 <div class="rte-editor" id="fdesc" contenteditable="true"></div>
@@ -164,7 +164,7 @@ body{background:#0a0a14;color:#fff;font-family:'Inter',sans-serif;min-height:100
 
 <div class="modal-overlay" id="editModal">
 <div class="modal">
-<button class="modal-close" onclick="closeEdit()">×</button>
+<button class="modal-close" onclick="closeEdit()">&times;</button>
 <div class="modal-title">Edit <span>Model</span></div>
 <input type="hidden" id="editIdx">
 <div class="field"><label>Model Name</label><input type="text" id="editName"></div>
@@ -185,7 +185,7 @@ body{background:#0a0a14;color:#fff;font-family:'Inter',sans-serif;min-height:100
 <button class="rte-btn" onclick="document.execCommand('bold');document.getElementById('editDesc').focus()"><b>B</b></button>
 <button class="rte-btn" onclick="document.execCommand('italic');document.getElementById('editDesc').focus()"><i>I</i></button>
 <button class="rte-btn" onclick="document.execCommand('underline');document.getElementById('editDesc').focus()"><u>U</u></button>
-<button class="rte-btn" onclick="document.execCommand('insertUnorderedList');document.getElementById('editDesc').focus()">• List</button>
+<button class="rte-btn" onclick="document.execCommand('insertUnorderedList');document.getElementById('editDesc').focus()">List</button>
 <button class="rte-btn" onclick="document.execCommand('formatBlock',false,'h3');document.getElementById('editDesc').focus()">H3</button>
 </div>
 <div class="rte-editor" id="editDesc" contenteditable="true"></div>
@@ -199,24 +199,37 @@ body{background:#0a0a14;color:#fff;font-family:'Inter',sans-serif;min-height:100
 </div>
 
 <script>
-var API_BASE='https://jsonblob.com/api/jsonBlob';
-var BIN_ID='019d2621-5268-7082-9be1-b4c79230fb08';
+var GH_TOKEN='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';
+var GH_OWNER='mtrakotgr-droid';
+var GH_REPO='fluid-prints-admin';
+var GH_FILE='data.json';
+var GH_API='https://api.github.com/repos/'+GH_OWNER+'/'+GH_REPO+'/contents/'+GH_FILE;
+
 var models=[];
+var fileSha='';
 var selIds=new Set();
 var CL={'anime-manga':'Anime & Manga','characters-busts':'Characters & Busts','christmas':'Christmas','desk-organizers':'Desk Organizers','dice-towers':'Dice Towers','dnd-tabletop':'DnD & Tabletop','egyptian-ancient':'Egyptian Gods & Ancient','fantasy-mythology':'Fantasy & Mythology','flexi-articulated':'Flexi & Articulated','gothic-dark':'Gothic & Dark','halloween':'Halloween','headphone-stands':'Headphone Stands','home-decor':'Home Decor','keychains':'Keychains','miniatures':'Miniatures','multicolor-3mf':'Multi-Color 3MF','planters-vases':'Planters & Vases','pop-culture':'Pop Culture','superheroes':'Superheroes','wall-art':'Wall Art'};
 
 function st(m,t){var s=document.getElementById('status');s.textContent=m;s.className='status '+t}
 
-async function readBin(){
-  var res=await fetch(API_BASE+'/'+BIN_ID,{headers:{'Accept':'application/json'}});
-  if(!res.ok)throw new Error('Read failed: HTTP '+res.status);
-  var raw=await res.json();
-  return Array.isArray(raw)?raw:[];
+function ghHeaders(){return{'Authorization':'Bearer '+GH_TOKEN,'Accept':'application/vnd.github+json','Content-Type':'application/json'}}
+
+async function readData(){
+  var res=await fetch(GH_API,{headers:ghHeaders()});
+  if(!res.ok)throw new Error('GitHub read failed: HTTP '+res.status);
+  var json=await res.json();
+  fileSha=json.sha;
+  var content=atob(json.content.replace(/\n/g,''));
+  var data=JSON.parse(content);
+  return Array.isArray(data)?data:[];
 }
 
-async function writeBin(data){
-  var res=await fetch(API_BASE+'/'+BIN_ID,{method:'PUT',headers:{'Content-Type':'application/json','Accept':'application/json'},body:JSON.stringify(data)});
-  if(!res.ok)throw new Error('Write failed: HTTP '+res.status);
+async function writeData(data){
+  var content=btoa(unescape(encodeURIComponent(JSON.stringify(data,null,2))));
+  var res=await fetch(GH_API,{method:'PUT',headers:ghHeaders(),body:JSON.stringify({message:'Update store data',content:content,sha:fileSha})});
+  if(!res.ok){var e=await res.json();throw new Error('GitHub write failed: '+(e.message||res.status))}
+  var result=await res.json();
+  fileSha=result.content.sha;
   return true;
 }
 
@@ -267,10 +280,10 @@ async function addModel(){
   btn.disabled=true;btn.innerHTML='<span class="spinner"></span> Adding...';
   st('Adding model...','load');
   try{
-    var data=await readBin();
+    var data=await readData();
     data.push({id:slug(name)+'-'+Date.now().toString(36),name:name,subtitle:'',category:document.getElementById('fcategory').value,price:price||'0',badge:badge,checkout:document.getElementById('fcheckout').value.trim()||'#',images:imgs.join(', '),description:document.getElementById('fdesc').innerHTML,printSettings:document.getElementById('fprintSettings').value.trim(),formats:document.getElementById('fformats').value,printer:document.getElementById('fprinter').value,fileCount:imgs.length+' file'+(imgs.length>1?'s':''),addedAt:Date.now()});
-    await writeBin(data);
-    st('Model added! It will appear on the store instantly.','ok');
+    await writeData(data);
+    st('Model added! It will appear on the store page.','ok');
     clearForm();
   }catch(e){st('Error: '+e.message,'err')}
   btn.disabled=false;btn.textContent='Add Model to Store';
@@ -279,13 +292,13 @@ async function addModel(){
 async function deleteModel(id){
   if(!confirm('Delete this model?'))return;
   st('Deleting...','load');
-  try{var data=await readBin();data=data.filter(function(m){return m.id!==id});await writeBin(data);st('Deleted.','ok');loadModels()}catch(e){st('Error: '+e.message,'err')}
+  try{var data=await readData();data=data.filter(function(m){return m.id!==id});await writeData(data);st('Deleted.','ok');loadModels()}catch(e){st('Error: '+e.message,'err')}
 }
 
 async function deleteSelected(){
   if(!selIds.size||!confirm('Delete '+selIds.size+' model(s)?'))return;
   st('Deleting...','load');
-  try{var data=await readBin();data=data.filter(function(m){return!selIds.has(m.id)});await writeBin(data);selIds.clear();updSel();st('Deleted.','ok');loadModels()}catch(e){st('Error: '+e.message,'err')}
+  try{var data=await readData();data=data.filter(function(m){return!selIds.has(m.id)});await writeData(data);selIds.clear();updSel();st('Deleted.','ok');loadModels()}catch(e){st('Error: '+e.message,'err')}
 }
 
 function toggleSel(id){if(selIds.has(id))selIds.delete(id);else selIds.add(id);updSel()}
@@ -325,7 +338,7 @@ async function saveEdit(){
   var price=badge==='Free'?'0':document.getElementById('editPrice').value;
   var imgs=document.getElementById('editImages').value.split('\n').map(function(s){return s.trim()}).filter(Boolean);
   try{
-    var data=await readBin();
+    var data=await readData();
     var idx=-1;for(var i=0;i<data.length;i++){if(data[i].id===id){idx=i;break}}
     if(idx===-1){st('Model not found','err');btn.disabled=false;btn.textContent='Save Changes';return}
     data[idx].name=document.getElementById('editName').value.trim();
@@ -338,7 +351,7 @@ async function saveEdit(){
     data[idx].description=document.getElementById('editDesc').innerHTML;
     data[idx].printSettings=document.getElementById('editPrintSettings').value.trim();
     data[idx].fileCount=imgs.length+' file'+(imgs.length>1?'s':'');
-    await writeBin(data);st('Updated!','ok');closeEdit();loadModels();
+    await writeData(data);st('Updated!','ok');closeEdit();loadModels();
   }catch(e){st('Error: '+e.message,'err')}
   btn.disabled=false;btn.textContent='Save Changes';
 }
@@ -367,7 +380,7 @@ function renderList(){
     var html='<input type="checkbox" '+(selIds.has(m.id)?'checked':'')+'>';
     if(th)html+='<img src="'+th+'" alt="" onerror="this.style.display=\'none\'">';
     html+='<div class="model-card-info"><div class="model-card-name">'+(m.name||'Untitled')+' '+bHTML(m.badge)+'</div><div class="model-card-meta"><span>'+pr+'</span><span>'+cl+'</span><span>'+(m.formats||'STL')+'</span></div></div>';
-    html+='<div class="model-card-actions"><button class="mc-btn" title="Edit">✏️</button><button class="mc-btn del" title="Delete">🗑</button></div>';
+    html+='<div class="model-card-actions"><button class="mc-btn" title="Edit">&#9998;</button><button class="mc-btn del" title="Delete">&#10005;</button></div>';
     c.innerHTML=html;
     c.querySelector('input[type=checkbox]').addEventListener('change',function(){toggleSel(m.id)});
     c.querySelector('.mc-btn:not(.del)').addEventListener('click',function(e){e.stopPropagation();openEdit(m.id)});
@@ -377,10 +390,9 @@ function renderList(){
 }
 
 async function loadModels(){
-  if(!BIN_ID)return;
   var list=document.getElementById('modelsList');
   list.innerHTML='<div class="empty">Loading...</div>';
-  try{var data=await readBin();models=data.filter(function(m){return m&&m.id});renderList()}catch(e){list.innerHTML='<div class="empty">Failed: '+e.message+'</div>'}
+  try{var data=await readData();models=data.filter(function(m){return m&&m.id});renderList();st('Loaded '+models.length+' model(s)','ok')}catch(e){list.innerHTML='<div class="empty">Failed: '+e.message+'</div>';st('Load error: '+e.message,'err')}
 }
 
 loadModels();
