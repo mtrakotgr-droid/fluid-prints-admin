@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Fluid Prints Admin</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#0a0a14;color:#fff;font-family:'Inter',sans-serif;min-height:100vh}
+.admin{max-width:1200px;margin:0 auto;padding:30px 20px}
+.admin-title{font-size:28px;font-weight:800;margin-bottom:6px}
+.admin-title span{color:#FFD700}
+.admin-sub{font-size:13px;color:rgba(255,255,255,.35);margin-bottom:30px}
+.status{padding:10px 16px;border-radius:8px;font-size:13px;font-weight:600;margin-bottom:20px;display:none}
+.status.ok{display:block;background:rgba(0,204,136,.1);border:1px solid rgba(0,204,136,.3);color:#00cc88}
+.status.err{display:block;background:rgba(255,60,60,.1);border:1px solid rgba(255,60,60,.3);color:#ff3c3c}
+.status.load{display:block;background:rgba(255,215,0,.1);border:1px solid rgba(255,215,0,.3);color:#FFD700}
+.tabs{display:flex;gap:0;margin-bottom:24px;border-bottom:1px solid rgba(255,255,255,.08)}
+.tab-btn{background:none;border:none;color:rgba(255,255,255,.35);font-family:'Inter',sans-serif;font-size:13px;font-weight:700;padding:12px 24px;cursor:pointer;position:relative;transition:color .2s}
+.tab-btn:hover{color:rgba(255,255,255,.7)}
+.tab-btn.active{color:#FFD700}
+.tab-btn.active::after{content:'';position:absolute;bottom:-1px;left:0;right:0;height:2px;background:#FFD700}
+.tab-content{display:none}
+.tab-content.active{display:block}
+.layout{display:grid;grid-template-columns:1fr 1fr;gap:30px}
+.panel{background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06);border-radius:12px;padding:24px}
+.panel-title{font-size:16px;font-weight:700;margin-bottom:20px;display:flex;align-items:center;gap:8px}
+.panel-title span{color:#FFD700}
+.field{margin-bottom:16px}
+.field label{display:block;font-size:11px;font-weight:700;color:rgba(255,255,255,.45);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px}
+.field input,.field select,.field textarea{width:100%;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);border-radius:8px;padding:10px 14px;font-size:13px;font-family:'Inter',sans-serif;color:#fff;outline:none;transition:border .2s}
+.field input:focus,.field select:focus,.field textarea:focus{border-color:rgba(255,215,0,.4)}
+.field textarea{min-height:100px;resize:vertical}
+.field select{cursor:pointer}
+.field select option{background:#1a1a2e;color:#fff}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
+.rte-bar{display:flex;gap:4px;margin-bottom:6px;flex-wrap:wrap}
+.rte-btn{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.08);color:rgba(255,255,255,.5);font-size:12px;font-weight:700;padding:5px 10px;cursor:pointer;border-radius:4px;font-family:'Inter',sans-serif;transition:all .2s}
+.rte-btn:hover{color:#FFD700;border-color:rgba(255,215,0,.3)}
+.rte-editor{width:100%;min-height:160px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);border-radius:8px;padding:12px 14px;font-size:13px;font-family:'Inter',sans-serif;color:rgba(255,255,255,.8);outline:none;line-height:1.7;overflow-y:auto;transition:border .2s}
+.rte-editor:focus{border-color:rgba(255,215,0,.4)}
+.rte-editor b,.rte-editor strong{color:#fff}
+.rte-editor h3{color:#FFD700;font-size:15px;margin:8px 0 4px}
+.img-preview{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;min-height:10px}
+.img-preview img{width:60px;height:75px;object-fit:cover;border:1px solid rgba(255,255,255,.1);border-radius:4px;opacity:.7;transition:all .2s}
+.img-preview img:first-child{border-color:rgba(255,215,0,.4);opacity:1}
+.btn{font-family:'Inter',sans-serif;font-size:13px;font-weight:700;padding:12px 24px;border:none;border-radius:8px;cursor:pointer;transition:all .2s;display:inline-flex;align-items:center;gap:8px}
+.btn-gold{background:#FFD700;color:#000}
+.btn-gold:hover{background:#e6c200;transform:translateY(-1px)}
+.btn-gold:disabled{opacity:.5;cursor:not-allowed;transform:none}
+.btn-outline{background:transparent;color:rgba(255,255,255,.5);border:1px solid rgba(255,255,255,.1)}
+.btn-outline:hover{color:#fff;border-color:rgba(255,255,255,.3)}
+.btn-row{display:flex;gap:10px;margin-top:20px}
+.models-toolbar{display:flex;gap:10px;margin-bottom:16px;align-items:center;flex-wrap:wrap}
+.models-toolbar input{flex:1;min-width:150px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);border-radius:8px;padding:8px 14px;font-size:12px;font-family:'Inter',sans-serif;color:#fff;outline:none}
+.models-toolbar input:focus{border-color:rgba(255,215,0,.4)}
+.models-toolbar select{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);border-radius:8px;padding:8px 12px;font-size:12px;font-family:'Inter',sans-serif;color:#fff;outline:none;cursor:pointer}
+.models-toolbar select option{background:#1a1a2e}
+.del-sel{background:rgba(255,60,60,.1);color:#ff3c3c;border:1px solid rgba(255,60,60,.2);font-family:'Inter',sans-serif;font-size:11px;font-weight:700;padding:8px 14px;border-radius:6px;cursor:pointer;transition:all .2s;display:none}
+.del-sel:hover{background:rgba(255,60,60,.25)}
+.del-sel.show{display:inline-flex;align-items:center;gap:4px}
+.models-grid{display:grid;grid-template-columns:1fr;gap:10px;max-height:650px;overflow-y:auto;padding-right:4px}
+.models-grid::-webkit-scrollbar{width:4px}
+.models-grid::-webkit-scrollbar-thumb{background:rgba(255,215,0,.15);border-radius:2px}
+.model-card{display:flex;gap:12px;padding:12px;background:rgba(255,255,255,.02);border:1px solid rgba(255,255,255,.06);border-radius:8px;align-items:center;transition:border .2s}
+.model-card:hover{border-color:rgba(255,215,0,.15)}
+.model-card.selected{border-color:rgba(255,60,60,.3);background:rgba(255,60,60,.03)}
+.model-card input[type=checkbox]{width:16px;height:16px;cursor:pointer;flex-shrink:0;accent-color:#FFD700}
+.model-card img{width:50px;height:62px;object-fit:cover;border-radius:4px;flex-shrink:0}
+.model-card-info{flex:1;min-width:0}
+.model-card-name{font-size:13px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:flex;align-items:center;gap:6px}
+.model-card-meta{font-size:11px;color:rgba(255,255,255,.35);margin-top:2px}
+.model-card-meta span{margin-right:10px}
+.model-card-actions{display:flex;gap:6px;flex-shrink:0}
+.mc-btn{width:30px;height:30px;border-radius:6px;border:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.03);color:rgba(255,255,255,.4);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:13px;transition:all .2s}
+.mc-btn:hover{color:#FFD700;border-color:rgba(255,215,0,.3)}
+.mc-btn.del:hover{color:#ff3c3c;border-color:rgba(255,60,60,.3)}
+.badge{font-size:9px;font-weight:800;padding:3px 8px;border-radius:4px;letter-spacing:1px;text-transform:uppercase;display:inline-block}
+.badge-new{background:#FFD700;color:#000}
+.badge-sale{background:#ff6b35;color:#fff}
+.badge-free{background:#00cc88;color:#fff}
+.badge-hot{background:#ff3c3c;color:#fff}
+.badge-limited{background:#a855f7;color:#fff}
+.empty{text-align:center;padding:40px;color:rgba(255,255,255,.2);font-size:13px}
+.spinner{display:inline-block;width:16px;height:16px;border:2px solid rgba(0,0,0,.2);border-top-color:#000;border-radius:50%;animation:spin .6s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:9999;display:none;align-items:center;justify-content:center}
+.modal-overlay.open{display:flex}
+.modal{background:#12121e;border:1px solid rgba(255,255,255,.08);border-radius:14px;padding:28px;width:95%;max-width:600px;max-height:90vh;overflow-y:auto;position:relative}
+.modal-close{position:absolute;top:12px;right:12px;background:none;border:none;color:rgba(255,255,255,.4);font-size:20px;cursor:pointer}
+.modal-close:hover{color:#fff}
+.modal-title{font-size:18px;font-weight:800;margin-bottom:20px}
+.modal-title span{color:#FFD700}
+@media(max-width:768px){.layout{grid-template-columns:1fr}.row2,.row3{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="admin">
+<div class="admin-title">Fluid <span>Prints</span> Admin</div>
+<div class="admin-sub">Add and manage models — changes appear on your store instantly.</div>
+<div class="status" id="status"></div>
+<div class="tabs">
+<button class="tab-btn active" id="tabBtnAdd" onclick="switchTab('add')">Add Model</button>
+<button class="tab-btn" id="tabBtnManage" onclick="switchTab('manage')">Manage Models</button>
+</div>
+<div class="tab-content active" id="tab-add">
+<div class="layout">
+<div class="panel">
+<div class="panel-title"><span>Model Details</span></div>
+<div class="field"><label>Model Name</label><input type="text" id="fname" placeholder="Winged Valkyrie Bust STL"></div>
+<div class="row2">
+<div class="field"><label>Category</label><select id="fcategory"><option value="anime-manga">Anime &amp; Manga</option><option value="characters-busts">Characters &amp; Busts</option><option value="christmas">Christmas</option><option value="desk-organizers">Desk Organizers</option><option value="dice-towers">Dice Towers</option><option value="dnd-tabletop">DnD &amp; Tabletop</option><option value="egyptian-ancient">Egyptian Gods &amp; Ancient</option><option value="fantasy-mythology">Fantasy &amp; Mythology</option><option value="flexi-articulated">Flexi &amp; Articulated</option><option value="gothic-dark">Gothic &amp; Dark</option><option value="halloween">Halloween</option><option value="headphone-stands">Headphone Stands</option><option value="home-decor">Home Decor</option><option value="keychains">Keychains</option><option value="miniatures">Miniatures</option><option value="multicolor-3mf">Multi-Color 3MF</option><option value="planters-vases">Planters &amp; Vases</option><option value="pop-culture">Pop Culture</option><option value="superheroes">Superheroes</option><option value="wall-art">Wall Art</option></select></div>
+<div class="field"><label>Price ($)</label><input type="number" id="fprice" placeholder="3.00" step="0.01" min="0"></div>
+</div>
+<div class="row3">
+<div class="field"><label>Badge</label><select id="fbadge"><option value="">None</option><option value="New">New</option><option value="Sale">Sale</option><option value="Free">Free</option><option value="Hot">Hot</option><option value="Limited">Limited</option></select></div>
+<div class="field"><label>Format</label><select id="fformats"><option value="STL">STL</option><option value="3MF">3MF</option><option value="STL + 3MF">STL + 3MF</option><option value="OBJ">OBJ</option></select></div>
+<div class="field"><label>Printer</label><select id="fprinter"><option value="FDM (Filament)">FDM</option><option value="Resin (SLA/DLP)">Resin</option><option value="FDM + Resin">FDM + Resin</option><option value="Multi-Color (Bambu/Orca)">Multi-Color</option></select></div>
+</div>
+<div class="field"><label>Polar Checkout URL</label><input type="text" id="fcheckout" placeholder="https://polar.sh/checkout/..."></div>
+</div>
+<div class="panel">
+<div class="panel-title"><span>Images &amp; Description</span></div>
+<div class="field"><label>Image URLs (one per line)</label><textarea id="fimages" rows="4" placeholder="https://i.ibb.co/abc/img1.png&#10;https://i.ibb.co/def/img2.jpg"></textarea></div>
+<div class="img-preview" id="imgPreview"></div>
+<div class="field">
+<label>Description (rich text)</label>
+<div class="rte-bar">
+<button class="rte-btn" onclick="rte('bold')"><b>B</b></button>
+<button class="rte-btn" onclick="rte('italic')"><i>I</i></button>
+<button class="rte-btn" onclick="rte('underline')"><u>U</u></button>
+<button class="rte-btn" onclick="rte('insertUnorderedList')">• List</button>
+<button class="rte-btn" onclick="rteH3()">H3</button>
+<button class="rte-btn" onclick="rteHR()">— Line</button>
+<button class="rte-btn" onclick="rteLink()">Link</button>
+</div>
+<div class="rte-editor" id="fdesc" contenteditable="true"></div>
+</div>
+<div class="field"><label>Print Settings (pipe-separated)</label><textarea id="fprintSettings" rows="3" placeholder="Layer Height: 0.10mm | Infill: 10% | Walls: 3 | Supports: Tree"></textarea></div>
+<div class="btn-row">
+<button class="btn btn-gold" id="addBtn" onclick="addModel()">Add Model to Store</button>
+<button class="btn btn-outline" onclick="clearForm()">Clear</button>
+</div>
+</div>
+</div>
+</div>
+<div class="tab-content" id="tab-manage">
+<div class="panel" style="max-width:100%">
+<div class="panel-title" style="justify-content:space-between;flex-wrap:wrap;gap:10px">
+<div><span>Your Models</span> — <span id="modelCount">0</span> total</div>
+<button class="btn btn-outline" onclick="loadModels()" style="padding:6px 14px;font-size:11px">Refresh</button>
+</div>
+<div class="models-toolbar">
+<input type="text" id="searchModels" placeholder="Search models..." oninput="filterModels()">
+<select id="filterCat" onchange="filterModels()"><option value="all">All Categories</option><option value="anime-manga">Anime &amp; Manga</option><option value="characters-busts">Characters &amp; Busts</option><option value="christmas">Christmas</option><option value="desk-organizers">Desk Organizers</option><option value="dice-towers">Dice Towers</option><option value="dnd-tabletop">DnD &amp; Tabletop</option><option value="egyptian-ancient">Egyptian Gods &amp; Ancient</option><option value="fantasy-mythology">Fantasy &amp; Mythology</option><option value="flexi-articulated">Flexi &amp; Articulated</option><option value="gothic-dark">Gothic &amp; Dark</option><option value="halloween">Halloween</option><option value="headphone-stands">Headphone Stands</option><option value="home-decor">Home Decor</option><option value="keychains">Keychains</option><option value="miniatures">Miniatures</option><option value="multicolor-3mf">Multi-Color 3MF</option><option value="planters-vases">Planters &amp; Vases</option><option value="pop-culture">Pop Culture</option><option value="superheroes">Superheroes</option><option value="wall-art">Wall Art</option></select>
+<button class="del-sel" id="delSelBtn" onclick="deleteSelected()">Delete Selected (<span id="selCount">0</span>)</button>
+</div>
+<div class="models-grid" id="modelsList"><div class="empty">Loading...</div></div>
+</div>
+</div>
+</div>
+
+<div class="modal-overlay" id="editModal">
+<div class="modal">
+<button class="modal-close" onclick="closeEdit()">×</button>
+<div class="modal-title">Edit <span>Model</span></div>
+<input type="hidden" id="editIdx">
+<div class="field"><label>Model Name</label><input type="text" id="editName"></div>
+<div class="row2">
+<div class="field"><label>Category</label><select id="editCategory"><option value="anime-manga">Anime &amp; Manga</option><option value="characters-busts">Characters &amp; Busts</option><option value="christmas">Christmas</option><option value="desk-organizers">Desk Organizers</option><option value="dice-towers">Dice Towers</option><option value="dnd-tabletop">DnD &amp; Tabletop</option><option value="egyptian-ancient">Egyptian Gods &amp; Ancient</option><option value="fantasy-mythology">Fantasy &amp; Mythology</option><option value="flexi-articulated">Flexi &amp; Articulated</option><option value="gothic-dark">Gothic &amp; Dark</option><option value="halloween">Halloween</option><option value="headphone-stands">Headphone Stands</option><option value="home-decor">Home Decor</option><option value="keychains">Keychains</option><option value="miniatures">Miniatures</option><option value="multicolor-3mf">Multi-Color 3MF</option><option value="planters-vases">Planters &amp; Vases</option><option value="pop-culture">Pop Culture</option><option value="superheroes">Superheroes</option><option value="wall-art">Wall Art</option></select></div>
+<div class="field"><label>Price ($)</label><input type="number" id="editPrice" step="0.01" min="0"></div>
+</div>
+<div class="row3">
+<div class="field"><label>Badge</label><select id="editBadge"><option value="">None</option><option value="New">New</option><option value="Sale">Sale</option><option value="Free">Free</option><option value="Hot">Hot</option><option value="Limited">Limited</option></select></div>
+<div class="field"><label>Format</label><select id="editFormats"><option value="STL">STL</option><option value="3MF">3MF</option><option value="STL + 3MF">STL + 3MF</option><option value="OBJ">OBJ</option></select></div>
+<div class="field"><label>Printer</label><select id="editPrinter"><option value="FDM (Filament)">FDM</option><option value="Resin (SLA/DLP)">Resin</option><option value="FDM + Resin">FDM + Resin</option><option value="Multi-Color (Bambu/Orca)">Multi-Color</option></select></div>
+</div>
+<div class="field"><label>Polar Checkout URL</label><input type="text" id="editCheckout"></div>
+<div class="field"><label>Image URLs (one per line)</label><textarea id="editImages" rows="4"></textarea></div>
+<div class="field">
+<label>Description</label>
+<div class="rte-bar">
+<button class="rte-btn" onclick="document.execCommand('bold');document.getElementById('editDesc').focus()"><b>B</b></button>
+<button class="rte-btn" onclick="document.execCommand('italic');document.getElementById('editDesc').focus()"><i>I</i></button>
+<button class="rte-btn" onclick="document.execCommand('underline');document.getElementById('editDesc').focus()"><u>U</u></button>
+<button class="rte-btn" onclick="document.execCommand('insertUnorderedList');document.getElementById('editDesc').focus()">• List</button>
+<button class="rte-btn" onclick="document.execCommand('formatBlock',false,'h3');document.getElementById('editDesc').focus()">H3</button>
+</div>
+<div class="rte-editor" id="editDesc" contenteditable="true"></div>
+</div>
+<div class="field"><label>Print Settings</label><textarea id="editPrintSettings" rows="3"></textarea></div>
+<div class="btn-row">
+<button class="btn btn-gold" id="saveEditBtn" onclick="saveEdit()">Save Changes</button>
+<button class="btn btn-outline" onclick="closeEdit()">Cancel</button>
+</div>
+</div>
+</div>
+
+<script>
+var API_BASE='https://jsonblob.com/api/jsonBlob';
+var BIN_ID='019d2621-5268-7082-9be1-b4c79230fb08';
+var models=[];
+var selIds=new Set();
+var CL={'anime-manga':'Anime & Manga','characters-busts':'Characters & Busts','christmas':'Christmas','desk-organizers':'Desk Organizers','dice-towers':'Dice Towers','dnd-tabletop':'DnD & Tabletop','egyptian-ancient':'Egyptian Gods & Ancient','fantasy-mythology':'Fantasy & Mythology','flexi-articulated':'Flexi & Articulated','gothic-dark':'Gothic & Dark','halloween':'Halloween','headphone-stands':'Headphone Stands','home-decor':'Home Decor','keychains':'Keychains','miniatures':'Miniatures','multicolor-3mf':'Multi-Color 3MF','planters-vases':'Planters & Vases','pop-culture':'Pop Culture','superheroes':'Superheroes','wall-art':'Wall Art'};
+
+function st(m,t){var s=document.getElementById('status');s.textContent=m;s.className='status '+t}
+
+async function readBin(){
+  var res=await fetch(API_BASE+'/'+BIN_ID,{headers:{'Accept':'application/json'}});
+  if(!res.ok)throw new Error('Read failed: HTTP '+res.status);
+  var raw=await res.json();
+  return Array.isArray(raw)?raw:[];
+}
+
+async function writeBin(data){
+  var res=await fetch(API_BASE+'/'+BIN_ID,{method:'PUT',headers:{'Content-Type':'application/json','Accept':'application/json'},body:JSON.stringify(data)});
+  if(!res.ok)throw new Error('Write failed: HTTP '+res.status);
+  return true;
+}
+
+function switchTab(t){
+  document.getElementById('tabBtnAdd').classList.toggle('active',t==='add');
+  document.getElementById('tabBtnManage').classList.toggle('active',t==='manage');
+  document.getElementById('tab-add').classList.toggle('active',t==='add');
+  document.getElementById('tab-manage').classList.toggle('active',t==='manage');
+  if(t==='manage')loadModels();
+}
+
+function bHTML(b){if(!b)return '';return '<span class="badge badge-'+b.toLowerCase()+'">'+b+'</span>'}
+function rte(c){document.execCommand(c,false,null);document.getElementById('fdesc').focus()}
+function rteH3(){document.execCommand('formatBlock',false,'h3');document.getElementById('fdesc').focus()}
+function rteHR(){document.execCommand('insertHTML',false,'<hr>');document.getElementById('fdesc').focus()}
+function rteLink(){var u=prompt('Enter URL:');if(u)document.execCommand('createLink',false,u);document.getElementById('fdesc').focus()}
+
+document.getElementById('fimages').addEventListener('input',function(){
+  var urls=this.value.split('\n').map(function(s){return s.trim()}).filter(Boolean);
+  var p=document.getElementById('imgPreview');p.innerHTML='';
+  urls.forEach(function(u){var i=document.createElement('img');i.src=u;i.onerror=function(){this.style.display='none'};p.appendChild(i)});
+});
+
+function slug(t){return t.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/(^-|-$)/g,'').substring(0,60)}
+
+function clearForm(){
+  document.getElementById('fname').value='';
+  document.getElementById('fprice').value='';
+  document.getElementById('fcheckout').value='';
+  document.getElementById('fimages').value='';
+  document.getElementById('fprintSettings').value='';
+  document.getElementById('fdesc').innerHTML='';
+  document.getElementById('fbadge').value='';
+  document.getElementById('fformats').value='STL';
+  document.getElementById('fcategory').value='characters-busts';
+  document.getElementById('fprinter').value='FDM (Filament)';
+  document.getElementById('imgPreview').innerHTML='';
+}
+
+async function addModel(){
+  var name=document.getElementById('fname').value.trim();
+  if(!name){st('Enter a model name','err');return}
+  var imgs=document.getElementById('fimages').value.split('\n').map(function(s){return s.trim()}).filter(Boolean);
+  if(!imgs.length){st('Add at least one image URL','err');return}
+  var badge=document.getElementById('fbadge').value;
+  var price=badge==='Free'?'0':document.getElementById('fprice').value;
+  var btn=document.getElementById('addBtn');
+  btn.disabled=true;btn.innerHTML='<span class="spinner"></span> Adding...';
+  st('Adding model...','load');
+  try{
+    var data=await readBin();
+    data.push({id:slug(name)+'-'+Date.now().toString(36),name:name,subtitle:'',category:document.getElementById('fcategory').value,price:price||'0',badge:badge,checkout:document.getElementById('fcheckout').value.trim()||'#',images:imgs.join(', '),description:document.getElementById('fdesc').innerHTML,printSettings:document.getElementById('fprintSettings').value.trim(),formats:document.getElementById('fformats').value,printer:document.getElementById('fprinter').value,fileCount:imgs.length+' file'+(imgs.length>1?'s':''),addedAt:Date.now()});
+    await writeBin(data);
+    st('Model added! It will appear on the store instantly.','ok');
+    clearForm();
+  }catch(e){st('Error: '+e.message,'err')}
+  btn.disabled=false;btn.textContent='Add Model to Store';
+}
+
+async function deleteModel(id){
+  if(!confirm('Delete this model?'))return;
+  st('Deleting...','load');
+  try{var data=await readBin();data=data.filter(function(m){return m.id!==id});await writeBin(data);st('Deleted.','ok');loadModels()}catch(e){st('Error: '+e.message,'err')}
+}
+
+async function deleteSelected(){
+  if(!selIds.size||!confirm('Delete '+selIds.size+' model(s)?'))return;
+  st('Deleting...','load');
+  try{var data=await readBin();data=data.filter(function(m){return!selIds.has(m.id)});await writeBin(data);selIds.clear();updSel();st('Deleted.','ok');loadModels()}catch(e){st('Error: '+e.message,'err')}
+}
+
+function toggleSel(id){if(selIds.has(id))selIds.delete(id);else selIds.add(id);updSel()}
+
+function updSel(){
+  document.getElementById('selCount').textContent=selIds.size;
+  document.getElementById('delSelBtn').classList.toggle('show',selIds.size>0);
+  document.querySelectorAll('.model-card').forEach(function(c){
+    var cid=c.getAttribute('data-id');c.classList.toggle('selected',selIds.has(cid));
+    var cb=c.querySelector('input[type=checkbox]');if(cb)cb.checked=selIds.has(cid);
+  });
+}
+
+function openEdit(id){
+  var m=models.find(function(x){return x.id===id});if(!m)return;
+  document.getElementById('editIdx').value=m.id;
+  document.getElementById('editName').value=m.name||'';
+  document.getElementById('editCategory').value=m.category||'characters-busts';
+  document.getElementById('editPrice').value=m.price||'';
+  document.getElementById('editBadge').value=m.badge||'';
+  document.getElementById('editFormats').value=m.formats||'STL';
+  document.getElementById('editPrinter').value=m.printer||'FDM (Filament)';
+  document.getElementById('editCheckout').value=m.checkout||'';
+  document.getElementById('editImages').value=(m.images||'').split(',').map(function(s){return s.trim()}).join('\n');
+  document.getElementById('editDesc').innerHTML=m.description||'';
+  document.getElementById('editPrintSettings').value=m.printSettings||'';
+  document.getElementById('editModal').classList.add('open');
+}
+
+function closeEdit(){document.getElementById('editModal').classList.remove('open')}
+
+async function saveEdit(){
+  var id=document.getElementById('editIdx').value;
+  var btn=document.getElementById('saveEditBtn');
+  btn.disabled=true;btn.innerHTML='<span class="spinner"></span> Saving...';
+  var badge=document.getElementById('editBadge').value;
+  var price=badge==='Free'?'0':document.getElementById('editPrice').value;
+  var imgs=document.getElementById('editImages').value.split('\n').map(function(s){return s.trim()}).filter(Boolean);
+  try{
+    var data=await readBin();
+    var idx=-1;for(var i=0;i<data.length;i++){if(data[i].id===id){idx=i;break}}
+    if(idx===-1){st('Model not found','err');btn.disabled=false;btn.textContent='Save Changes';return}
+    data[idx].name=document.getElementById('editName').value.trim();
+    data[idx].category=document.getElementById('editCategory').value;
+    data[idx].price=price;data[idx].badge=badge;
+    data[idx].formats=document.getElementById('editFormats').value;
+    data[idx].printer=document.getElementById('editPrinter').value;
+    data[idx].checkout=document.getElementById('editCheckout').value.trim();
+    data[idx].images=imgs.join(', ');
+    data[idx].description=document.getElementById('editDesc').innerHTML;
+    data[idx].printSettings=document.getElementById('editPrintSettings').value.trim();
+    data[idx].fileCount=imgs.length+' file'+(imgs.length>1?'s':'');
+    await writeBin(data);st('Updated!','ok');closeEdit();loadModels();
+  }catch(e){st('Error: '+e.message,'err')}
+  btn.disabled=false;btn.textContent='Save Changes';
+}
+
+function filterModels(){renderList()}
+
+function renderList(){
+  var list=document.getElementById('modelsList');
+  var s=(document.getElementById('searchModels').value||'').toLowerCase();
+  var cat=document.getElementById('filterCat').value;
+  var f=models.filter(function(m){
+    if(cat!=='all'&&m.category!==cat)return false;
+    if(s&&(m.name||'').toLowerCase().indexOf(s)===-1)return false;
+    return true;
+  });
+  document.getElementById('modelCount').textContent=models.length;
+  if(!f.length){list.innerHTML='<div class="empty">No models found.</div>';return}
+  list.innerHTML='';
+  f.forEach(function(m){
+    var imgs=(m.images||'').split(',');var th=imgs[0]?imgs[0].trim():'';
+    var pr=m.badge==='Free'?'Free':'$'+(parseFloat(m.price)||0).toFixed(2);
+    var cl=CL[m.category]||m.category;
+    var c=document.createElement('div');
+    c.className='model-card'+(selIds.has(m.id)?' selected':'');
+    c.setAttribute('data-id',m.id);
+    var html='<input type="checkbox" '+(selIds.has(m.id)?'checked':'')+'>';
+    if(th)html+='<img src="'+th+'" alt="" onerror="this.style.display=\'none\'">';
+    html+='<div class="model-card-info"><div class="model-card-name">'+(m.name||'Untitled')+' '+bHTML(m.badge)+'</div><div class="model-card-meta"><span>'+pr+'</span><span>'+cl+'</span><span>'+(m.formats||'STL')+'</span></div></div>';
+    html+='<div class="model-card-actions"><button class="mc-btn" title="Edit">✏️</button><button class="mc-btn del" title="Delete">🗑</button></div>';
+    c.innerHTML=html;
+    c.querySelector('input[type=checkbox]').addEventListener('change',function(){toggleSel(m.id)});
+    c.querySelector('.mc-btn:not(.del)').addEventListener('click',function(e){e.stopPropagation();openEdit(m.id)});
+    c.querySelector('.mc-btn.del').addEventListener('click',function(e){e.stopPropagation();deleteModel(m.id)});
+    list.appendChild(c);
+  });
+}
+
+async function loadModels(){
+  if(!BIN_ID)return;
+  var list=document.getElementById('modelsList');
+  list.innerHTML='<div class="empty">Loading...</div>';
+  try{var data=await readBin();models=data.filter(function(m){return m&&m.id});renderList()}catch(e){list.innerHTML='<div class="empty">Failed: '+e.message+'</div>'}
+}
+
+loadModels();
+</script>
+</body>
+</html>
